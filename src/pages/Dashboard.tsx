@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center">
           <div>
             <p className="text-sm text-gray-500 mb-1">Device Status</p>
-            <h3 className="text-2xl font-bold text-gray-800">{data.device_status || 'Offline'}</h3>
+            <h3 className="text-2xl font-bold text-gray-800">{data.device_status}</h3>
           </div>
           <div className="p-3 rounded-full bg-blue-50">
             <Activity className="text-blue-500" />
