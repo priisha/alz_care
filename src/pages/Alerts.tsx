@@ -26,18 +26,11 @@ const Alerts: React.FC = () => {
     const unsubscribe = patientService.subscribeToPatient(
       'P001',
       () => {
-        // Refresh alerts list on any change (including status updates)
+        //  alerts list refresh garna ko lagi on any change (including status updates)
         fetchAlerts();
       },
       () => {
-        // ideally we just rely on fetchAlerts() above, but for instant feedback on NEW alerts:
-        // However, fetchAlerts() will also be called. 
-        // Let's stick to just fetchAlerts() for simplicity and consistency, 
-        // or keep this for optimistic UI but remove the duplicate append if fetchAlerts happens.
-        // Actually, since we changed the service to fire generic updates for ALL alert changes,
-        // relying on fetchAlerts() (arg 1) is safer than manual state manipulation here.
-        // So we can remove this specific onAlert logic if we want, OR keep it for the toast (Toast is handled in App.tsx).
-        // Let's just use fetchAlerts() for the list.
+        
       }
     );
 
@@ -86,7 +79,6 @@ const Alerts: React.FC = () => {
                             <p className="text-gray-500 text-sm mb-4">Patient ID: {alert.patient_id}</p>
                             
                             <div className="space-y-2">
-                                {/* Location removed from Alert type, hiding for now */}
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                     <Clock size={16} /> {(alert.status === 'Resolved' && alert.resolved_at) ? new Date(alert.resolved_at).toLocaleString() : new Date(alert.created_at).toLocaleString()}
                                 </div>
