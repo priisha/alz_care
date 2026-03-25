@@ -7,6 +7,7 @@ import LocationHistory from './pages/LocationHistory';
 import Alerts from './pages/Alerts';
 import { ToastProvider } from './context/ToastContext';
 import AlertListener from './components/AlertListener';
+import About from './pages/About';
 
 const App: React.FC = () => {
   return (
@@ -20,7 +21,7 @@ const App: React.FC = () => {
             <Route path="/tracking" element={<RealTimeTracking />} />
             <Route path="/history" element={<LocationHistory />} />
             <Route path="/alerts" element={<Alerts />} />
-            <Route path="/about" element={<div className="p-10">About Page</div>} />
+            <Route path="/about" element={<About />} />
           </Routes>
           
           <footer className="text-center p-6 text-xs text-gray-400">

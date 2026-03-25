@@ -4,7 +4,6 @@ import { patientService } from '../services/patientService';
 import L from 'leaflet';
 import type { Patient } from '../types';
 
-// Leaflet Icon Fix
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 const DefaultIcon = L.icon({
@@ -15,7 +14,6 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Helper component to auto-pan
 const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
   const map = useMap();
   useEffect(() => {
