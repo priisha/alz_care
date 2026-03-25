@@ -78,9 +78,9 @@ const About: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
 
-      <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-blue-600 text-white overflow-hidden">
-        <div className="absolute -top-16 -right-16 h-72 w-72 rounded-full bg-white opacity-5" />
-        <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-white opacity-5 translate-y-1/2 -translate-x-1/4" />
+      <section className="bg-blue-900 text-white">
+        <div className="absolute -top-16 -right-16 h-72 w-72" />
+        <div className="absolute bottom-0 left-0 h-48 w-48 " />
 
         <div className="relative max-w-4xl mx-auto px-6 py-24 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-6 text-sm font-medium tracking-wide">
@@ -198,7 +198,7 @@ const About: React.FC = () => {
         </div>
       </section>
 
-      <section className="bg-blue-700 text-white">
+      <section className="bg-blue-900 text-white">
         <div className="max-w-4xl mx-auto px-6 py-14 text-center">
           <Activity className="h-10 w-10 mx-auto mb-4 opacity-80" />
           <h2 className="text-2xl font-extrabold mb-3">Providing Peace of Mind, One Alert at a Time</h2>
