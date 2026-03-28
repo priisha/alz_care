@@ -1,19 +1,23 @@
-import { supabase } from '../supabase';
-import type { Patient } from '../types';
+import { supabase } from '../supabase'; 
+import type { Patient, LocationData, Alert } from '../types';
+
+// This line allows other files to import { supabase } from this file
+// export const supabase = supabaseClient;
 
 export interface PatientRepository {
     getPatient(id: string): Promise<Patient | null>;
     subscribeToPatient(
         id: string,
         onUpdate: (patient: Patient) => void,
-        onAlert?: (alert: import('../types').Alert) => void
+        onAlert?: (alert: Alert) => void
     ): () => void;
-    getLocationHistory(patientId: string): Promise<import('../types').LocationData[]>;
-    getAlerts(patientId: string): Promise<import('../types').Alert[]>;
+    getLocationHistory(patientId: string): Promise<LocationData[]>;
+    getAlerts(patientId: string): Promise<Alert[]>;
     updateAlertStatus(id: number, status: 'Active' | 'Acknowledged' | 'Resolved'): Promise<void>;
 }
 
 export class SupabasePatientRepository implements PatientRepository {
+    // 1. Fetch patient details, latest location, and alert count
     async getPatient(id: string): Promise<Patient | null> {
         const { data: patient, error } = await supabase
             .from('patients')
@@ -26,7 +30,7 @@ export class SupabasePatientRepository implements PatientRepository {
             return null;
         }
 
-        // Fetch latest location
+        // Fetch latest location from locations table
         const { data: locations } = await supabase
             .from('locations')
             .select('*')
@@ -34,7 +38,7 @@ export class SupabasePatientRepository implements PatientRepository {
             .order('recorded_at', { ascending: false })
             .limit(1);
 
-        // Fetch active alerts count
+        // Fetch active alerts count from alerts table
         const { count } = await supabase
             .from('alerts')
             .select('*', { count: 'exact', head: true })
@@ -48,23 +52,18 @@ export class SupabasePatientRepository implements PatientRepository {
         } as Patient;
     }
 
-    // Note: Subscription logic is tricky with multiple tables. 
-    // For simplicity, we'll just listen to patient updates for now 
-    // and trigger a full re-fetch or assume partial updates.
-    // Ideally, we'd listen to 'alerts' and 'locations' too.
+    // 2. Real-time subscription for Patients, Locations, and Alerts
     subscribeToPatient(
         id: string,
         onUpdate: (patient: Patient) => void,
-        onAlert?: (alert: import('../types').Alert) => void
+        onAlert?: (alert: Alert) => void
     ): () => void {
-        // Helper to refresh full state
         const refresh = async () => {
             const p = await this.getPatient(id);
             if (p) onUpdate(p);
         };
 
-        const uniqueChannelId = `patient-full-${id}-${Math.random().toString(36).substring(7)}`;
-        const channel = supabase.channel(uniqueChannelId)
+        const channel = supabase.channel(`patient-monitor-${id}`)
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'patients', filter: `id=eq.${id}` },
@@ -77,69 +76,54 @@ export class SupabasePatientRepository implements PatientRepository {
             )
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'alerts', filter: `patient_id=eq.${id}` },
+                { event: 'INSERT', schema: 'public', table: 'alerts', filter: `patient_id=eq.${id}` },
                 (payload) => {
                     refresh();
-                    // Only trigger toast for new alerts
-                    if (onAlert && payload.eventType === 'INSERT' && payload.new) {
-                        onAlert(payload.new as import('../types').Alert);
-                    }
+                    if (onAlert) onAlert(payload.new as Alert);
                 }
             )
             .subscribe();
+
         return () => {
             supabase.removeChannel(channel);
         };
     }
 
-    async getLocationHistory(patientId: string): Promise<import('../types').LocationData[]> {
+    // 3. Get history for breadcrumb mapping
+    async getLocationHistory(patientId: string): Promise<LocationData[]> {
         const { data, error } = await supabase
             .from('locations')
             .select('*')
             .eq('patient_id', patientId)
             .order('recorded_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching location history:', error);
-            return [];
-        }
-
-        return data as import('../types').LocationData[];
+        return error ? [] : (data as LocationData[]);
     }
 
-    async getAlerts(patientId: string): Promise<import('../types').Alert[]> {
+    // 4. Get all alerts for the logs
+    async getAlerts(patientId: string): Promise<Alert[]> {
         const { data, error } = await supabase
             .from('alerts')
             .select('*')
             .eq('patient_id', patientId)
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('Error fetching alerts:', error);
-            return [];
-        }
-
-        return data as import('../types').Alert[];
+        return error ? [] : (data as Alert[]);
     }
 
+    // 5. Update alert status (e.g., Resolving a fall)
     async updateAlertStatus(id: number, status: 'Active' | 'Acknowledged' | 'Resolved'): Promise<void> {
         const updates: any = { status };
-
-        if (status === 'Resolved') {
-            updates.resolved_at = new Date().toISOString();
-        }
+        if (status === 'Resolved') updates.resolved_at = new Date().toISOString();
 
         const { error } = await supabase
             .from('alerts')
             .update(updates)
             .eq('id', id);
 
-        if (error) {
-            console.error('Error updating alert status:', error);
-            throw error;
-        }
+        if (error) throw error;
     }
 }
 
-// Export a singleton instance
+// Export the singleton instance to be used across the app
 export const patientService = new SupabasePatientRepository();

@@ -12,7 +12,7 @@ import { ToastProvider } from './context/ToastContext';
 import AlertListener from './components/AlertListener';
 
 // 1. Initialize Supabase
-const supabase = createClient('YOUR_URL', 'YOUR_KEY');
+const supabase = createClient('https://innjqpuucklkbqwfbptu.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubmpxcHV1Y2tsa2Jxd2ZicHR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMzkzNDAsImV4cCI6MjA4NjcxNTM0MH0.f-hl3R6OO3PF3VejSg8o7r2nsJli-c17SxSjbvAWLrc');
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
