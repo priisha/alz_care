@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { patientService } from '../services/patientService';
 import { supabase } from '../supabase';
-import type { LocationData } from '../types';
 import { AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import type { Alert } from '../types';
 
@@ -38,8 +37,7 @@ const Alerts: React.FC = () => {
         unsubscribe = patientService.subscribeToPatient(
           link.patient_id,
           () => fetchAlerts(link.patient_id), // Refresh on any patient status change
-          (newAlert) => {
-            // Optional: Show a browser notification or toast here for a new alert
+          () => {
             fetchAlerts(link.patient_id);
           }
         );
