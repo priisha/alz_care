@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { patientService } from '../services/patientService';
-import { supabase } from '../supabase';import type { LocationData } from '../types';
+import { supabase } from '../supabase';
+import type { LocationData } from '../types';
 import { AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import type { Alert } from '../types';
 
