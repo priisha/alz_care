@@ -1,8 +1,8 @@
 import { supabase } from '../supabase'; 
 import type { Patient, LocationData, Alert } from '../types';
 
-// This line allows other files to import { supabase } from this file
-// export const supabase = supabaseClient;
+// RE-EXPORT supabase so other components (like RegisterDevice) can use the same instance
+export { supabase };
 
 export interface PatientRepository {
     getPatient(id: string): Promise<Patient | null>;
