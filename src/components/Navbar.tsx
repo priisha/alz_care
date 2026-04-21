@@ -16,7 +16,7 @@ const Navbar: React.FC = () => {
       if (error) throw error;
       
       // Redirect to login page immediately
-      navigate('/login');
+      navigate('/');
     } catch (error: any) {
       console.error('Error logging out:', error.message);
     }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { patientService } from '../services/patientService';
 import { supabase } from '../supabase';
-import { CheckCircle, AlertTriangle, Activity, MapPin, Clock, PlusCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Activity, MapPin, Clock, PlusCircle, Bell } from 'lucide-react';
 import type { Patient } from '../types';
 import RegisterDevice from '../components/RegisterDevice';
 
@@ -15,11 +15,9 @@ const Dashboard: React.FC = () => {
 
     const initDashboard = async () => {
       try {
-        // 1. Get the current logged-in user
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // 2. Check for a linked device in the bridge table
         const { data: link, error } = await supabase
           .from('caregiver_patients')
           .select('patient_id')
@@ -35,13 +33,11 @@ const Dashboard: React.FC = () => {
         setHasDevice(true);
         const deviceId = link.patient_id;
 
-        // 3. Fetch Initial Patient Data
         const patient = await patientService.getPatient(deviceId);
         if (patient) {
           setData(patient);
         }
 
-        // 4. Subscribe to Live Updates
         unsubscribe = patientService.subscribeToPatient(deviceId, (updatedPatient) => {
           setData(updatedPatient);
         });
@@ -65,7 +61,6 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // --- View A: No Device Registered ---
   if (!hasDevice) {
     return (
       <div className="p-8 bg-secondary min-h-screen flex flex-col items-center justify-center">
@@ -81,26 +76,25 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  // --- View B: Dashboard with Data ---
-  if (!data) return <div className="p-10 text-center">Device linked, but waiting for first data sync...</div>;
+  if (!data) return <div className="p-10 text-center text-gray-500 italic">Device linked, but waiting for first data sync...</div>;
 
   return (
     <div className="p-8 bg-secondary min-h-screen">
       <div className="flex justify-between items-end mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
-          <p className="text-gray-500">Monitor {data.name.split(' ')[0]}’s safety in real time</p>
+          <p className="text-sm text-gray-500">Monitor {data.name.split(' ')[0]}’s safety in real time</p>
         </div>
         <div className="text-right text-xs text-gray-400">
-           ID: <span className="font-mono">{data.id}</span>
+           Device ID: <span className="font-mono font-bold text-gray-500">{data.id}</span>
         </div>
       </div>
 
-      {/* Top Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Patient Status Card */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition-transform hover:scale-[1.02]">
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Patient Status</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Patient Status</p>
             <h3 className={`text-2xl font-black ${data.status === 'Safe' ? 'text-green-600' : 'text-red-600'}`}>
               {data.status}
             </h3>
@@ -110,20 +104,24 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Active Alerts Card - FIXED SECTION */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition-transform hover:scale-[1.02]">
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Active Alerts</p>
-            <h3 className="text-2xl font-black text-gray-800">{data.active_alerts_count || 0}</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Active Alerts</p>
+            <h3 className={`text-2xl font-black ${(data.active_alerts_count ?? 0) > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+              {data.active_alerts_count || 0}
+            </h3>
           </div>
-          <div className={`p-3 rounded-full ${ (data.active_alerts_count ?? 0) > 0 ? 'bg-red-100 animate-pulse' : 'bg-gray-100'}`}>
-           className={ (data.active_alerts_count ?? 0) > 0 ? 'text-red-500' : 'text-gray-400' }
+          <div className={`p-3 rounded-full ${(data.active_alerts_count ?? 0) > 0 ? 'bg-red-100 animate-pulse' : 'bg-gray-100'}`}>
+            <Bell size={20} className={(data.active_alerts_count ?? 0) > 0 ? 'text-red-600' : 'text-gray-400'} />
           </div>
         </div>
 
+        {/* Device Connectivity Card */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition-transform hover:scale-[1.02]">
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Device Battery</p>
-            <h3 className="text-2xl font-black text-gray-800">{data.device_status || 'Online'}</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Device Connectivity</p>
+            <h3 className="text-2xl font-black text-blue-600">{data.device_status || 'Online'}</h3>
           </div>
           <div className="p-3 rounded-full bg-blue-100">
             <Activity className="text-blue-600" />
@@ -131,8 +129,8 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Detailed Information Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Profile/Detailed Info Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h3 className="font-bold text-gray-700">Detailed Information</h3>
@@ -173,9 +171,12 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Add Device form also available on the side for switching devices */}
+        {/* Form to change device remains accessible */}
         <div className="hidden lg:block">
-           <RegisterDevice />
+          <div className="bg-white p-6 rounded-xl border border-dashed border-gray-300">
+             <p className="text-sm font-semibold text-gray-500 mb-4">Switch or Register New Device</p>
+             <RegisterDevice />
+          </div>
         </div>
       </div>
     </div>

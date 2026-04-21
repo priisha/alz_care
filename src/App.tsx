@@ -8,6 +8,8 @@ import LocationHistory from './pages/LocationHistory';
 import Alerts from './pages/Alerts';
 import About from './pages/About';
 import Login from './pages/Login'; 
+import Landing from './pages/Landing'; 
+import UpdatePassword from './components/UpdatePassword'; // Added this
 import { ToastProvider } from './context/ToastContext';
 import AlertListener from './components/AlertListener';
 
@@ -19,45 +21,76 @@ const supabase = createClient(
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      // Removed manual navigate() calls here to let the <Routes> 
+      // logic handle redirection based on the new session state.
     });
+
     return () => subscription.unsubscribe();
   }, []);
+
+  if (loading) return <div className="flex items-center justify-center min-h-screen">Loading AlzCare...</div>;
 
   return (
     <ToastProvider>
       <Router>
-        {!session ? (
-          <Routes>
-            <Route path="*" element={<Login supabase={supabase} />} />
-          </Routes>
-        ) : (
-          <>
-            {/* The global listener that detects the ESP32 database inserts */}
-            <AlertListener /> 
-            
-            <div className="font-sans text-gray-900 bg-gray-50 min-h-screen flex flex-col">
-              <Navbar />
-              <main className="flex-1"> 
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/tracking" element={<RealTimeTracking />} />
-                  <Route path="/history" element={<LocationHistory />} />
-                  <Route path="/alerts" element={<Alerts />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/login" element={<Navigate to="/" />} />
-                </Routes>
-              </main>
-              <footer className="text-center p-6 text-xs text-gray-400">
-                © 2026 AlzCare. All rights reserved.
-              </footer>
-            </div>
-          </>
-        )}
+        {/* If logged in, we listen for hardware alerts globally */}
+        {session && <AlertListener />} 
+        
+        <div className="font-sans text-gray-900 bg-gray-50 min-h-screen flex flex-col">
+          {/* Only show Navbar if logged in */}
+          {session && <Navbar />}
+
+          <main className="flex-1"> 
+            <Routes>
+              {/* PUBLIC ROUTES */}
+              {/* When session is null, "/" renders <Landing />. No more auto-redirect to login. */}
+              <Route path="/" element={session ? <Navigate to="/dashboard" /> : <Landing />} />
+              <Route path="/login" element={session ? <Navigate to="/dashboard" /> : <Login supabase={supabase} />} />
+              <Route path="/signup" element={session ? <Navigate to="/dashboard" /> : <Login supabase={supabase} isSignUp={true} />} />
+              <Route path="/about" element={<About />} />
+              
+              {/* Password Reset Callback Route */}
+              <Route path="/update-password" element={<UpdatePassword supabase={supabase} />} />
+
+              {/* PROTECTED ROUTES */}
+              <Route 
+                path="/dashboard" 
+                element={session ? <Dashboard /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/tracking" 
+                element={session ? <RealTimeTracking /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/history" 
+                element={session ? <LocationHistory /> : <Navigate to="/login" />} 
+              />
+              <Route 
+                path="/alerts" 
+                element={session ? <Alerts /> : <Navigate to="/login" />} 
+              />
+
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </main>
+
+          <footer className="text-center p-6 text-xs text-gray-400">
+            © 2026 AlzCare. All rights reserved.
+          </footer>
+        </div>
       </Router>
     </ToastProvider>
   );
