@@ -11,13 +11,15 @@ import Login from './pages/Login';
 import { ToastProvider } from './context/ToastContext';
 import AlertListener from './components/AlertListener';
 
-// 1. Initialize Supabase
-const supabase = createClient('https://innjqpuucklkbqwfbptu.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubmpxcHV1Y2tsa2Jxd2ZicHR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMzkzNDAsImV4cCI6MjA4NjcxNTM0MH0.f-hl3R6OO3PF3VejSg8o7r2nsJli-c17SxSjbvAWLrc');
+// Initialize Supabase
+const supabase = createClient(
+  'https://innjqpuucklkbqwfbptu.supabase.co', 
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlubmpxcHV1Y2tsa2Jxd2ZicHR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMzkzNDAsImV4cCI6MjA4NjcxNTM0MH0.f-hl3R6OO3PF3VejSg8o7r2nsJli-c17SxSjbvAWLrc'
+);
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
 
-  // 2. Check login status
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -30,14 +32,14 @@ const App: React.FC = () => {
     <ToastProvider>
       <Router>
         {!session ? (
-          /* 3. If NOT logged in, to only show the Login page */
           <Routes>
             <Route path="*" element={<Login supabase={supabase} />} />
           </Routes>
         ) : (
-          /* 4. If logged in,  to show the full app */
           <>
-            <AlertListener />
+            {/* The global listener that detects the ESP32 database inserts */}
+            <AlertListener /> 
+            
             <div className="font-sans text-gray-900 bg-gray-50 min-h-screen flex flex-col">
               <Navbar />
               <main className="flex-1"> 
